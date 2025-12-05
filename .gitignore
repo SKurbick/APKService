@@ -1,0 +1,6 @@
+.env
+.idea/
+__pycache__/
+creds.json
+todo.md
+окружение.txt
