@@ -12,6 +12,13 @@ router = APIRouter(prefix="/googlesheet", tags=["Работа с гугл таб
   "spreadsheet": "TEST: УУ - Дирекция",
   "table_id_header": "string"
 }
+
+{
+  "sheet": "База контрагентов",
+  "spreadsheet": "APK тестирование",
+  "table_id_header": "№"
+}
+
 """
 @router.post("/get_data_in_sheet")
 async def get_data_in_sheet(
@@ -25,6 +32,9 @@ async def get_data_in_sheet(
 
 @router.post("/add_data_in_sheet")
 async def add_data_in_sheet(
+        gs_params: GoogleSheetParams,
+        service: GoogleSheetService =  Depends(get_googlesheet_service)
 ):
+    await service.get_suppliers_data_from_db(gs_params=gs_params)
     print("OK")
     return {"message": "OK"}

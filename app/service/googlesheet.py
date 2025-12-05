@@ -1,6 +1,6 @@
 import datetime
 from pprint import pprint
-from typing import List
+from typing import List, Dict, Any
 
 from app.infrastructure.googlesheet import PCGoogleSheet
 from app.models import GoogleSheetParams #GoogleSheetData
@@ -33,10 +33,63 @@ class GoogleSheetService:
 
     async def get_suppliers_data_from_db(self, gs_params: GoogleSheetParams):
         suppliers_data = await self.google_sheet_repository.get_suppliers_data()
-        update_data = {}
-
-
+        update_data = self.prepare_data_for_wild_insert(db_data=suppliers_data)
         pprint(update_data)
-        self.gs_connect(
+
+        await self.gs_connect(
             sheet = gs_params.sheet, spreadsheet = gs_params.spreadsheet, creds_json = settings.CREDS
-        ).add_suppliers_data()
+        ).update_revenue_rows(update_data,table_id="№" )
+
+    @staticmethod
+    def prepare_data_for_wild_insert(
+            db_data: List[Dict[str, Any]],
+            key_field: str = "id"
+    ) -> Dict[str, Dict[str, Any]]:
+        """
+        Простая версия преобразования данных
+        """
+
+        FIELD_MAPPING = {
+            'id': '№',
+            'name': 'Наименование',
+            'inn': 'ИНН',
+            'contact_info': 'Контактные данные',
+            'comment': 'Комментарий',
+            'reliability_update_date': 'Дата обновления информации по благонадежности',
+            'opf': 'ОПФ',
+            'supplier_category': 'Категория поставщика',
+            'country': 'Страна',
+            'tax_system': 'Система налогообложения',
+            'reliability_level': 'Уровень благонадежности',
+            'edo_operator': 'Оператор ЭДО',
+            'responsible_person': 'Ответственное лицо',
+            'statutory_documents_link': 'Ссылка на уставные/личные документы',
+            'ka_guarantee_letter': 'Гарантийное письмо КА',
+            'card_details': 'Карточка / реквизиты',
+            'record_sheet_passport': 'Лист записи/Паспорт',
+            'oi_guarantee_letter': 'Гарантийное письмо ОИ',
+            'check_1': 'Проверка',
+            'check_2': 'Проверка №2'
+        }
+
+        result = {}
+
+        for record in db_data:
+            key_value = record.get(key_field)
+            if not key_value:
+                continue
+
+            key = str(key_value)
+            formatted = {}
+
+            for db_field, sheet_header in FIELD_MAPPING.items():
+                value = record.get(db_field)
+                if value is None:
+                    formatted[sheet_header] = ''
+                else:
+                    # Просто преобразуем в строку
+                    formatted[sheet_header] = str(value).strip()
+
+            result[key] = formatted
+
+        return result

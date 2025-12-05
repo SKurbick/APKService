@@ -73,9 +73,8 @@ class GoogleSheetRepository:
             await conn.executemany(query, records)
     async def get_suppliers_data(self):
         select_query = """
-        SELECT cb.*, p.name FROM current_balances as cb
-        JOIN products as p ON cb.product_id=p.id;
+            SELECT * from test.test_table;
         """
         async with self.pool.acquire() as conn:
             result = await conn.fetch(select_query)
-        pprint(result)
+        return result
